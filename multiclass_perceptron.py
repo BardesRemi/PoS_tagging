@@ -201,7 +201,7 @@ for epoch in range(10):
 #testing
 error = 0
 total_test = 0
-for entry in test_set:
+for entry in foot_set:
     for i in range (len(entry[0])):
         error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
         total_test += 1
