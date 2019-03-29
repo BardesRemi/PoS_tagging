@@ -197,6 +197,13 @@ for epoch in range(10):
             count += 1
             if count%1000==0:
                 print(count)
-word,lab = train_set[0]
-for i in range(len(word)):
-    print(perceptron.predict(feature_from_word(word,i)),lab[i])
+
+#testing
+error = 0
+total_test = 0
+for entry in test_set:
+    for i in range (len(entry[0])):
+        error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
+        total_test += 1
+
+print(error*100/total_test)
