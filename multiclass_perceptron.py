@@ -1,3 +1,6 @@
+import json
+from collections import defaultdict
+
 class Perceptron:
 
     def __init__(self, labels):
@@ -40,8 +43,9 @@ class Perceptron:
         if labels == None:
             labs = self.labels
         res = []
+        # print(features)
         for l in labs :
-            dot_product = sum(self.weights[f][l] for f, val in features )
+            dot_product = sum(self.weights[key][l] for key in features )
             res += [dot_product]
         return res
 
@@ -106,10 +110,6 @@ class Perceptron:
         self._accum = None
         self._last_update = None
 
-
-
-import json
-
 #Loading data
 train_set = json.load(open("fr.ud.train.json"))
 test_set = json.load(open("fr.ud.test.json"))
@@ -127,14 +127,20 @@ label_set = all_labels([train_set, test_set, dev, foot_set, minecraft_set])
 
 #Generate a feature sparse vector (as a dictionnary) from a sentence, and a word position. 
 def feature_from_word(s,i):
+
+    # print("---------------------------")
+    # print(i)
+    # print(s)
+    # print(len(s))
+    # print("---------------------------")
     res = {}
     res['last3c: {}'.format(s[i][-3:])] = 1
     res['last: {}'.format(s[i][-1])] = 1
-    res['first: {}'.format(s[i][1])] = 1
+    res['first: {}'.format(s[i][0])] = 1
     res['Word: {}'.format(s[i])] = 1
-    res['firstUpper: {}'.format(s[i][1].isupper())] = 1
+    res['firstUpper: {}'.format(s[i][0].isupper())] = 1
     res['allUpper: {}'.format(s[i].isupper())] = 1
-    if i>=2 and i<= len(s)-2 :
+    if i>=2 and i< len(s)-2 :
         res['wi-1: {}'.format(s[i-1])] = 1
         res['wi-2: {}'.format(s[i-2])] = 1
         res['wi+1: {}'.format(s[i+1])] = 1
@@ -149,10 +155,10 @@ def feature_from_word(s,i):
         else :
             res['wi-1: {}'.format(s[i-1])] = 1
             res['wi-2: {}'.format(s[i-2])] = 1
-        if i>len(s)-1 :
+        if i>=len(s)-1 :
             res['wi+1: '] = 1
             res['wi+2: '] = 1
-        elif i>len(s)-2 :
+        elif i>=len(s)-2 :
             res['wi+1: {}'.format(s[i+1])] = 1
             res['wi+2: '] = 1
         else :
@@ -160,7 +166,8 @@ def feature_from_word(s,i):
             res['wi+2: {}'.format(s[i+2])] = 1
     return res
 
-perceptron = Percerptron(label_set)
+perceptron = Perceptron(list(label_set))
+
 
 
 """
@@ -178,4 +185,18 @@ def make_dicts(datasets):
     return words_dict, chars_dict
 """
 
-
+#Training
+count = 0
+for epoch in range(10):
+    for words, labels in train_set:
+        for i in range(len(words)):
+            features = feature_from_word(words,i)
+            prediction = perceptron.predict(features)
+            #print(prediction)
+            perceptron.update(labels[i],prediction,features)
+            count += 1
+            if count%1000==0:
+                print(count)
+word,lab = train_set[0]
+for i in range(len(word)):
+    print(perceptron.predict(feature_from_word(word,i)),lab[i])
