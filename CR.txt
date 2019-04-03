@@ -1,0 +1,36 @@
+Question 1 :
+
+Etude des données : 
+	
+	Analyse faite via un script python (data_analyseur.py)
+
+	Dataset1 _ Foot : (dataset de test)
+	Ce dataset contient 743 phrases et 2638 mots uniques. Il se compose de tweets ayant comme sujet commun le football. Ils ne sont pas tous en français.
+
+	Dataset2 _ ftb :
+	Ce dataset contient 14759 phrases et 30189 mots uniques. Il se compose de phrases extraites d’articles du journal “le monde”.
+
+	Dataset3 _ gsd :
+	Ce dataset contien 14450 phrases et 44109 mots uniques. Il se compose de phrases initialement issues du projet français universal dependencies, et depuis 2015 s’en est détaché par des mises à  jours différentes.
+
+	Dataset4 _ natdis : (dataset de test)
+	Ce dataset contient 622 phrases et 1631 mots uniques. Il se compose de tweets diverses.
+
+	Dataset5 _ partut :
+	Ce dataset contient 803 phrases et 4198 mots uniques. Il se compose de phrases extraites de différents genre de textes, comme des discours, des textes de loi et des des articles wikipédia.
+
+	Dataset6_pud :
+	Ce dataset contient 803 phrases et 8071 mots uniques. Il se compose d’une partie du PUD treebanks.
+	
+	Dataset7_sequoia :
+	Ce dataset contient 2231 phrases et 9744 mots uniques. Il se compose de phrases obtenues par conversion automatique de phrases du corpus de Sequoia Treebank.
+
+	Dataset8_spoken :
+	Ce dataset contient 1153 phrases et 4619 mots uniques. Il se compose de phrases utilisées principalement dans le français parlé.
+
+
+Question 2 :
+
+	OOV :
+	
+	Mesure de la proportion d emots du jeu de test qui n’apparaissent pas dans le jeu d’entrainement. Cela permet d’évaluer la proximité entre les jeux d’entrainement et de test, ce qui influe grandement sur l’interprétation des performance d’un classifier. Plus cette valeur est élevée plus les jeux sont différents.
