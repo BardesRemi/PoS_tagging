@@ -84,7 +84,7 @@ def make_dicts(datasets):
     print(len(words))words
     print("------------")"""
 
-
+# Compute the OOV rate in a corpus
 def OOV_calculation (train, test):
     train_words = make_dict(train)
     test_words = make_dict(test)
@@ -94,29 +94,39 @@ def OOV_calculation (train, test):
             cpt += 1
     return cpt/len(test_words) * 100
 
+# Display the OOV rate
 for d in datasets:
     print(OOV_calculation(d[0],d[1]))
     print("------------")
 
+# Function that generates all the ngram from a sentence in a list form
 def ngram(sentence, n):
     return [sentence[i:i+n] for i in range(len(sentence) - n + 1)]
 
+# Function that generates a long string consisting of all the sentences in a dataset concatened
 def generate_corp(dataset):
     res = ""
     for sentence, labels in dataset:
         res += " ".join(sentence)
     return res
 
+# Function that generates the alphabet , e.g. the set of all the present characters, from a corpus
 def generate_alphabet(corpus):
-    crop = ""
+    corp = ""
     for dataset in corpus:
         corp = "".join(generate_corp(dataset))
     return set(corp)
 
-print(len(generate_alphabet(ftb)))
-print(generate_alphabet(ftb))
+print(len(generate_alphabet(sequoia)))
+print(generate_alphabet(sequoia))
 # print(generate_corp(ftb[1]))
 
+""" 
+ Function that generates a dict associating all n-grams existing in a corpus to their # of appearances
+ Return 2 dictionaries, one for each dataset (train, test) of the corpus
+ Note : in reality we return the # of appearances + 1 of each n-grams to not give an infinite weight to non-present n-grams
+ later in the probability formula
+"""
 def generate_N(corpus):
     #generate N
     N_train = defaultdict(lambda:1)
@@ -131,12 +141,26 @@ def generate_N(corpus):
         N_test.update({k: v + 1 for k,v in counts.items()})
     return N_train, N_test
 
+"""
+ Returns the probability of a n-gram in a dataset given :
+ - the n-gram
+ - the alphabet of the corpus
+ - the length in characters of the corpus/dataset
+ - the dict n-grams/occurences for each dataset of the corpus
+ - the parameter n of the n-grams
+ The probability of the n_grams is the # of occurences of this n-grams (+1) in this dataset divided by the total number of 
+ existing  unique n-grams given the alphabet + the total number of n-grams in the dataset
+"""
 def prob(tri_gram, alphabet, length, N, n):
     return N[tri_gram] / (len(alphabet) ** n + length - n + 1)
 
-def KL():
+# Function that computes the KL divergence from a corpus
+def KL(corpus):
     #itérer sur tous tri_gram possibles
     #pour chaque tri gram appliquer formule
     #sommer les résultats
     #victoire
-    pass
+    train_full = generate_corp(corpus[0])
+    test_full = generate_corp(corpus[1])
+    alphabet = generate_alphabet(corpus)
+    # Générer tous les n-grams possible avec cet alphabet, avec product mais je sais pas m'en servir
