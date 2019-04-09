@@ -1,5 +1,7 @@
 import json
 from collections import Counter, defaultdict
+from itertools import product
+import math
 
 #Loading data
 fr_foot_test = json.load(open("corpus/fr/fr.foot.test.json"))
@@ -160,7 +162,19 @@ def KL(corpus):
     #pour chaque tri gram appliquer formule
     #sommer les résultats
     #victoire
+    N_train, N_test = generate_N(corpus)
     train_full = generate_corp(corpus[0])
     test_full = generate_corp(corpus[1])
+    length_train = len(train_full)
+    length_test = len(test_full)
+    length_full = length_train + length_test 
     alphabet = generate_alphabet(corpus)
-    # Générer tous les n-grams possible avec cet alphabet, avec product mais je sais pas m'en servir
+    all_ngrams = ("".join(k) for k in product(alphabet, repeat=3))
+    somme = 0
+    for k in all_ngrams:
+        prob_train = prob(k, alphabet, length_train, N_train, 3)
+        prob_test = prob(k, alphabet, length_test, N_test, 3) 
+        somme +=  prob_test * math.log(prob_test/prob_train)
+    return somme
+
+print(KL(spoken))
