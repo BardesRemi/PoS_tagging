@@ -116,7 +116,7 @@ def generate_corp(dataset):
 def generate_alphabet(corpus):
     corp = ""
     for dataset in corpus:
-        corp = "".join(generate_corp(dataset))
+        corp += "".join(generate_corp(dataset))
     return set(corp)
 
 print(len(generate_alphabet(sequoia)))
@@ -131,16 +131,25 @@ print(generate_alphabet(sequoia))
 """
 def generate_N(corpus):
     #generate N
+    sentence = ""
     N_train = defaultdict(lambda:1)
     N_test = defaultdict(lambda:1)
     for words, labels in corpus[0]:
         sentence = " ".join(words)
         counts = Counter(ngram(sentence, 3))
-        N_train.update({k: v + 1 for k,v in counts.items()})
+        for k,v in counts.items():
+            if k in N_train:
+                N_train[k] += v
+            else :
+                N_train.update({k: v + 1})
     for words, labels in corpus[1]:
         sentence = " ".join(words)
         counts = Counter(ngram(sentence, 3))
-        N_test.update({k: v + 1 for k,v in counts.items()})
+        for k,v in counts.items():
+            if k in N_test:
+                N_test[k] += v
+            else :
+                N_test.update({k: v + 1})
     return N_train, N_test
 
 """
@@ -153,8 +162,8 @@ def generate_N(corpus):
  The probability of the n_grams is the # of occurences of this n-grams (+1) in this dataset divided by the total number of 
  existing  unique n-grams given the alphabet + the total number of n-grams in the dataset
 """
-def prob(tri_gram, alphabet, length, N, n):
-    return N[tri_gram] / (len(alphabet) ** n + length - n + 1)
+def prob(tri_gram, alphabet, count, N, n):
+    return N[tri_gram] / (len(alphabet) ** n + count)
 
 # Function that computes the KL divergence from a corpus
 def KL(corpus):
@@ -165,16 +174,18 @@ def KL(corpus):
     N_train, N_test = generate_N(corpus)
     train_full = generate_corp(corpus[0])
     test_full = generate_corp(corpus[1])
-    length_train = len(train_full)
-    length_test = len(test_full)
-    length_full = length_train + length_test 
+    #length_full = length_train + length_test
     alphabet = generate_alphabet(corpus)
     all_ngrams = ("".join(k) for k in product(alphabet, repeat=3))
     somme = 0
+    count_train = sum(N_train.values())
+    count_test = sum(N_test.values())
     for k in all_ngrams:
-        prob_train = prob(k, alphabet, length_train, N_train, 3)
-        prob_test = prob(k, alphabet, length_test, N_test, 3) 
+        prob_train = prob(k, alphabet, count_train, N_train, 3)
+        prob_test = prob(k, alphabet, count_test, N_test, 3)
         somme +=  prob_test * math.log(prob_test/prob_train)
     return somme
 
-print(KL(spoken))
+for data in datasets:
+    print("---------")
+    print(KL(data))
