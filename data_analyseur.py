@@ -49,6 +49,20 @@ pud = [fr_pud_dev,fr_pud_test, fr_pud_train]
 sequoia = [fr_sequoia_dev, fr_sequoia_test, fr_sequoia_train]
 spoken =  [fr_spoken_dev, fr_spoken_test, fr_spoken_train]"""
 
+train_datasets = [("train_ftb", fr_ftb_train),
+                  ("train_gsd", fr_gsd_train),
+                  ("train_partut", fr_partut_train),
+                  ("train_pud", fr_pud_train),
+                  ("train_sequoia", fr_sequoia_train),
+                  ("train_spoken", fr_spoken_train)]
+test_datasets = [("test_foot", fr_foot_test),
+                 ("test_natdis", fr_natdis_test),
+                 ("test_ftb", fr_ftb_test),
+                 ("test_gsd", fr_gsd_test),
+                 ("test_partut", fr_partut_test),
+                 ("test_pud", fr_pud_test),
+                 ("test_sequoia", fr_sequoia_test),
+                 ("test_spoken", fr_spoken_test)]
 
 datasets = [ftb, gsd, partut, pud, sequoia, spoken]
 full_datasets = [foot, ftb, gsd, natdis, partut, pud, sequoia, spoken]
@@ -97,9 +111,9 @@ def OOV_calculation (train, test):
     return cpt/len(test_words) * 100
 
 # Display the OOV rate
-for d in datasets:
-    print(OOV_calculation(d[0],d[1]))
-    print("------------")
+# for d in datasets:
+#     print(OOV_calculation(d[0],d[1]))
+#     print("------------")
 
 # Function that generates all the ngram from a sentence in a list form
 def ngram(sentence, n):
@@ -116,11 +130,17 @@ def generate_corp(dataset):
 def generate_alphabet(corpus):
     corp = ""
     for dataset in corpus:
-        corp += "".join(generate_corp(dataset))
+        corp += "".join(generate_corp(dataset[1]))
     return set(corp)
 
-print(len(generate_alphabet(sequoia)))
-print(generate_alphabet(sequoia))
+def generate_alphabet_V2(corpus):
+    corp = ""
+    for dataset in corpus:
+        corp = generate_corp(dataset)
+    return set(corp)
+
+#print(len(generate_alphabet(sequoia)))
+#print(generate_alphabet(sequoia))
 # print(generate_corp(ftb[1]))
 
 """ 
@@ -132,8 +152,8 @@ print(generate_alphabet(sequoia))
 def generate_N(corpus):
     #generate N
     sentence = ""
-    N_train = defaultdict(lambda:1)
-    N_test = defaultdict(lambda:1)
+    N_train = defaultdict(lambda: 1)
+    N_test = defaultdict(lambda: 1)
     for words, labels in corpus[0]:
         sentence = " ".join(words)
         counts = Counter(ngram(sentence, 3))
@@ -166,17 +186,8 @@ def prob(tri_gram, alphabet, count, N, n):
     return N[tri_gram] / (len(alphabet) ** n + count)
 
 # Function that computes the KL divergence from a corpus
-def KL(corpus):
-    #itérer sur tous tri_gram possibles
-    #pour chaque tri gram appliquer formule
-    #sommer les résultats
-    #victoire
+def KL(corpus, alphabet, all_ngrams):
     N_train, N_test = generate_N(corpus)
-    train_full = generate_corp(corpus[0])
-    test_full = generate_corp(corpus[1])
-    #length_full = length_train + length_test
-    alphabet = generate_alphabet(corpus)
-    all_ngrams = ("".join(k) for k in product(alphabet, repeat=3))
     somme = 0
     count_train = sum(N_train.values())
     count_test = sum(N_test.values())
@@ -186,6 +197,33 @@ def KL(corpus):
         somme +=  prob_test * math.log(prob_test/prob_train)
     return somme
 
-for data in datasets:
-    print("---------")
-    print(KL(data))
+def KL_display(trains, tests):
+    alphabet = generate_alphabet(tests)
+    all_ngrams = list("".join(k) for k in product(alphabet, repeat=3))
+    filename = "Metrics_computations.csv"
+    f = open(filename, "w")
+    f.write("train_Set 1 ; test_Set 2 ; OOV ; KL_Divergence;\n")
+    for train_set in trains:
+        for test_set in tests:
+            f.write(train_set[0] + ";" + test_set[0] + ";" + str(OOV_calculation(train_set[1], test_set[1])) + " % ;" + str(KL( [train_set[1], test_set[1]], alphabet, all_ngrams)) +";\n" )
+            #print("Comparaison de " + train_set[0] + " et " + test_set[0])
+            #print(KL( [train_set[1], test_set[1]], alphabet, all_ngrams))
+    f.close()
+
+
+#KL_display(train_datasets, test_datasets)
+corpus = [fr_pud_train, fr_partut_train]
+alphabet = generate_alphabet_V2(corpus)
+all_ngrams = list("".join(k) for k in product(alphabet, repeat=3))
+print(KL(corpus, alphabet, all_ngrams))
+#KL_display([("ftb_test" ,fr_ftb_test)], [("ftb_test", fr_ftb_test)])
+
+"""
+Perplexity : 
+sur KenLM : https://kheafield.com/code/kenlm/
+Suivre les instructions pour compiler le programme
+Suivre la commande pour transformer un fichier texte en .arpa utilisé par le modèle
+( Il faut transformer le JSON en .txt, on ne garde que les phrases pas les labels, 
+une phrase par ligne)
+Puis on peut calculer la perplexité (avec query ?) faut chercher un peu apparemment
+"""

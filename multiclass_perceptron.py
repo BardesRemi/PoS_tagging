@@ -207,3 +207,12 @@ for entry in foot_set:
         total_test += 1
 
 print(error*100/total_test)
+
+"""
+Idée pour  évaluer le perceptron :
+Train normal puis executer sur tous le test set
+Renvoyer le texte de test avec les labels originaux + les labels prédit
+Cela permet d'évaluer directement sa précision global
+On peut ensuite garder uniquement les mots OOV ou ambigus pour tester sa précision
+sur ces mots spécifiquement
+"""
