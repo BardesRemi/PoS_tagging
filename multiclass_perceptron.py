@@ -50,8 +50,6 @@ class Perceptron:
         return res
 
 
-        pass
-
     def update(self, truth, guess, features):
         def upd_feat(label, feature, v):
             param = (label, feature)
