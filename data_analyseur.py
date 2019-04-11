@@ -225,14 +225,16 @@ def KL_display(trains, tests):
 corpus = [fr_pud_train, fr_partut_train]
 alphabet = generate_alphabet_V2(corpus)
 all_ngrams = list("".join(k) for k in product(alphabet, repeat=3))
-print(KL(corpus, alphabet, all_ngrams))
+#print(KL(corpus, alphabet, all_ngrams))
 
-for dataset in train_datasets :
-    make_txt(dataset)
-for dataset in test_datasets :
-    make_txt(dataset)
+# for dataset in train_datasets :
+#     make_txt(dataset)
+# for dataset in test_datasets :
+#     make_txt(dataset)
 
 #KL_display([("ftb_test" ,fr_ftb_test)], [("ftb_test", fr_ftb_test)])
+
+#print(train_datasets)
 
 """
 Perplexity : 
