@@ -294,10 +294,10 @@ test = test_datasets[0][1][:1000]
 l_feat, r_feat = distrib_features_dict(train,test)
 
 
-
-for ci, count in features3(train[1][0], 5, l_feat, r_feat).items():
-    print(ci + " = " + str(count))
-print("-------------")
+for i in range(10):
+    for ci, count in features3(train[1][0], i, l_feat, r_feat).items():
+        print(ci + " = " + str(count))
+    print("-------------")
 
 """
 #Make a dictionnary that associate every word & character to a unique identifier
