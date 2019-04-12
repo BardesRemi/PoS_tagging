@@ -1,3 +1,4 @@
+import re
 import json
 from data_analyseur import *
 from collections import defaultdict
@@ -180,7 +181,7 @@ def features1(s,i):
 #The word, with the 2 before and after him in the sentence
 def features2(s,i):
     res = features1(s,i)
-    res['Word: {}'.format(s[i])] = 1
+    
     if i>=2 and i< len(s)-2 :
         res['wi-1: {}'.format(s[i-1])] = 1
         res['wi-2: {}'.format(s[i-2])] = 1
@@ -188,20 +189,20 @@ def features2(s,i):
         res['wi+2: {}'.format(s[i+2])] = 1
     else :
         if i<1 :
-            res['wi-1: '] = 1
-            res['wi-2: '] = 1
+            res['wi-1: NULL'] = 1
+            res['wi-2: NULL'] = 1
         elif i<2 :
             res['wi-1: {}'.format(s[i-1])] = 1
-            res['wi-2: '] = 1
+            res['wi-2: NULL'] = 1
         else :
             res['wi-1: {}'.format(s[i-1])] = 1
             res['wi-2: {}'.format(s[i-2])] = 1
         if i>=len(s)-1 :
-            res['wi+1: '] = 1
-            res['wi+2: '] = 1
+            res['wi+1: NULL'] = 1
+            res['wi+2: NULL'] = 1
         elif i>=len(s)-2 :
             res['wi+1: {}'.format(s[i+1])] = 1
-            res['wi+2: '] = 1
+            res['wi+2: NULL'] = 1
         else :
             res['wi+1: {}'.format(s[i+1])] = 1
             res['wi+2: {}'.format(s[i+2])] = 1
@@ -211,18 +212,15 @@ def features2(s,i):
 """-------------------------------------------------------------------------------"""
 """-------------------------------------------------------------------------------"""
 
-def words_frequency_from_corpus (train, test, n):
+def words_frequency_from_corpus (train, n):
     word_frequency = defaultdict(int)
     for s, label in train:
         for word in s :
             word_frequency.update({word : word_frequency[word]+1 })
-    for s, label in test:
-        for word in s :
-            word_frequency.update({word : word_frequency[word]+1 })
     return [i[0] for i in sorted(word_frequency.items(), key=itemgetter(1), reverse=True)[:n]]
 
-def distrib_features_dict(train,test):
-    freq = words_frequency_from_corpus(train,test, 10)
+def distrib_features_dict(train):
+    freq = words_frequency_from_corpus(train, 500)
     d_left = defaultdict(lambda:defaultdict(int))
     d_right = defaultdict(lambda:defaultdict(int))
     for s, label in train :
@@ -236,33 +234,13 @@ def distrib_features_dict(train,test):
             elif i == len(s)-1 :
                 if s[i-1] in freq:
                     d_left[s[i]][s[i-1]] += 1
-                else :
-                    d_left[s[i]]["a trash"] += 1
+                #else :
+                    #d_left[s[i]]["a trash"] += 1
             else:
                 if s[i-1] in freq:
                     d_left[s[i]][s[i-1]] += 1
-                else :
-                    d_left[s[i]]["a trash"] += 1
-                if s[i+1] in freq:
-                    d_right[s[i]][s[i+1]] += 1
-    for s, label in test :
-        for i in range(len(s)):
-            #word = s[i]
-            #right_word = s[i+1]
-            #left_word = s[i-1]
-            if i == 0 and i < len(s)-1:
-                if s[i+1] in freq:
-                    d_right[s[i]][s[i+1]] += 1
-            elif i == len(s)-1 :
-                if s[i-1] in freq:
-                    d_left[s[i]][s[i-1]] += 1
-                else :
-                    d_left[s[i]]["a trash"] += 1
-            else:
-                if s[i-1] in freq:
-                    d_left[s[i]][s[i-1]] += 1
-                else :
-                    d_left[s[i]]["a trash"] += 1
+                #else :
+                   #d_left[s[i]]["a trash"] += 1
                 if s[i+1] in freq:
                     d_right[s[i]][s[i+1]] += 1
 
@@ -270,17 +248,23 @@ def distrib_features_dict(train,test):
 
 
 #The features described in "FLORS : Fast and Simple Domain Adaptation for PoS Tagging"
-def features3(s,i, l_features, r_features):
-    res = {}
-
+def features3(s,i, l_feat_list, r_feat_list):
+    res = features2(s, i)
+    
     #Left features
-    for ci, count in l_features[s[i]].items():
-        res["l_" + ci + "_" + s[i]] = 1 + math.log(count)
+    for k in range(len(l_feat_list)):
+        res["l_" + str(k) + "_" + l_feat_list[k][0]] = 1
     #Right features
-    for ci, count in r_features[s[i]].items():
-        res["r_" + s[i] + "_" + ci] = 1 + math.log(count)
+    for k in range(len(r_feat_list)):
+        res["r_" + str(k) + "_" + r_feat_list[k][0]] = 1
     
     #Shape features
+    res['firstUpper: {}'.format(s[i][0].isupper())] = 1
+    res['has_digit: {}'.format(bool(re.search(r'\d', s[i])))] = 1
+    res['has_hyphen: {}'.format("-" in s[i])] = 1
+    res['has_upper: {}'.format(any (c.isupper() for c in s[i]))] = 1
+    res['allUpper: {}'.format(s[i].isupper())] = 1
+
 
     #Suffix features
     for c in range(len(s[i])):
@@ -288,10 +272,6 @@ def features3(s,i, l_features, r_features):
 
     #shape features
     return res
-
-train = train_datasets[2][1]
-test = test_datasets[2][1]
-l_feat, r_feat = distrib_features_dict(train,test)
 
 
 # for i in range(10):
@@ -314,49 +294,94 @@ def make_dicts(datasets):
     return words_dict, chars_dict
 """
 
-#Training
-def training(max_epoch, train_set, perceptron):
+#perceptron = Perceptron(list(all_labels(full_datasets)))
+#train = train_datasets[2][1]
+#test = [("ud", json.load(open("fr.ud.test.json"))), ("foot", json.load(open("foot.json"))), ("minecraft", json.load(open("minecraft.json")))]
+
+max_epoch = 10
+
+# for w, d in l_feat.items():
+#     for k, v in d.items():
+#        if w=="le": print(k + " " + w + " " + str(v))
+
+filename = "Results.csv"
+f = open(filename, 'w')
+
+for train in train_datasets:
+    name_train = train[0]
+    #Training
+    perceptron = Perceptron(list(all_labels(full_datasets)))
     count = 0
+    l_feat, r_feat = distrib_features_dict(train[1])
+    l_feat_list = sorted(l_feat[s[i]].items(), key=itemgetter(1), reverse=True)
+    r_feat_list = sorted(r_feat[s[i]].items(), key=itemgetter(1), reverse=True)
     for epoch in range(max_epoch):
-        for words, labels in train_set:
+        for words, labels in train[1]:
             for i in range(len(words)):
-                features = features3(words,i, l_feat, r_feat)
+                features = features1(words, i)
+                #features = features2(words,i)
+                #features = features3(words,i, l_feat_list, r_feat_list)
+                #if words[i] == "le": print(features)
                 prediction = perceptron.predict(features)
-                #print(prediction)
                 perceptron.update(labels[i],prediction,features)
                 # Affichage pour vérifier que le perceptron tourne bien
                 count += 1
-                if count%1000==0:
+                if count%10000==0:
                     print(count)
 
-#testing
-def testing(test_set, perceptron):
-    total_test = 0
-    result = test_set
+
+    #testing
+    global_error = 0.0
+    global_OOV_error = 0.0
+    global_ambiguous_error = 0.0 
+    result = test_datasets.copy()
+    ambiguous = ambiguous_words(train[1])
+    # result = test.copy()
     # entry = sentence, labels
     for entry in result:
-        predict_labels = []
-        for i in range (len(entry[0])):
-            prediction = perceptron.predict(feature_from_word(entry[0],i))
-            predict_labels.append(prediction)
-            # error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
-            total_test += 1
-        entry.append(predict_labels)
-    return result
-        
-def error_rates(predicted):
-    error = 0
-    count = 0
-    for s, labels, p_labels in predicted:
-        for i in range(len(labels)):
-            count += 1
-            error += labels[i] != p_labels[i]
-    print(error * 100 / count)
+        OOV = OOV_words(train[1], entry[1])
+        name_test = entry[0]
+        #test_set = entry[1]
+        for values in entry[1]:
+            predict_labels = []
+            for i in range(len(values[0])):
+                prediction = perceptron.predict(features1(values[0],i))
+                #prediction = perceptron.predict(features3(values[0],i, l_feat_list, r_feat_list))
+                predict_labels.append(prediction)
+                # error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
+            values.append(predict_labels)
+        # print(entry[1])
+    # computing error rates
+        error = 0
+        OOV_error = 0
+        ambiguous_error = 0
+        count_error = 0
+        count_OOV = 0
+        count_ambiguous = 0
 
-perceptron = Perceptron(list(all_labels(full_datasets)))
-training(10, train, perceptron)
-predicted = testing(test, perceptron)
-error_rates(predicted)
+        for s, labels, p_labels in entry[1]:
+            for i in range(len(labels)):
+                count_error += 1                
+                if labels[i] != p_labels[i]:
+                    error += 1
+                if s[i] in OOV:
+                    count_OOV += 1
+                    if labels[i] != p_labels[i]:
+                        error_OOV += 1
+                if s[i] in ambiguous:
+                    count_ambiguous += 1
+                    if labels[i] != p_labels[i]:
+                        error_ambiguous += 1
+
+        global_error += error * 100 / count_error
+        global_OOV_error += OOV_error * 100 / count_OOV
+        global_ambiguous_error += ambiguous_error * 100 / count_ambiguous
+        f.write(name_train + ";" + name_test + ";" + str(error * 100 / count_error) + ";" + str(OOV_error * 100 / count_OOV) + ";" + str(ambiguous_error * 100 / count_ambiguous) + ";\n")
+        print(name + " " + str(error * 100 / count)) 
+
+    print("Global error : " + str(global_error / len(result)))
+    f.write("\n")
+f.close()
 
 """
 Idée pour  évaluer le perceptron :

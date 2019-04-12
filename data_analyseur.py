@@ -121,6 +121,32 @@ def OOV_calculation (train, test):
             cpt += 1
     return cpt/len(test_words) * 100
 
+def OOV_words (train, test):
+    train_words = make_dict(train)
+    test_words = make_dict(test)
+    res = []
+    for w in test_words:
+        if not w in train_words:
+            res.append(w)
+    return res
+
+def ambiguous_words(train):
+    words_dict= {}
+    res = []
+    for words, labels in train:
+        for word in words:
+            if not word in words_dict:
+                words_dict[word] = [labels]
+            else:
+                if not labels in words_dict[word]:
+                    words_dict[word].append(labels)
+    
+    for w, labels in words_dict:
+        if len(labels > 1):
+            res.append(w)
+    return res
+
+
 # Display the OOV rate
 # for d in datasets:
 #     print(OOV_calculation(d[0],d[1]))
