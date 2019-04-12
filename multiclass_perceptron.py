@@ -309,7 +309,9 @@ def make_dicts(datasets):
 max_epoch = 10
 all_labels = list(all_labels(full_datasets))
 
-filename = "Results.csv"
+#train = json.load(open("corpus/fr/fr.ftb.train.json"))
+
+filename = "Results_features3.csv"
 f = open(filename, 'w')
 
 for train in train_datasets:
@@ -321,10 +323,9 @@ for train in train_datasets:
     for epoch in range(max_epoch):
         for words, labels in train[1]:
             for i in range(len(words)):
-                features = features1(words, i)
+                #features = features1(words, i)
                 #features = features2(words,i)
-                #features = features3(words,i, l_feat_list[words[i]], r_feat_list[words[i]])
-                #if words[i] == "le": print(features)
+                features = features3(words,i, l_feat_list[words[i]], r_feat_list[words[i]])
                 prediction = perceptron.predict(features)
                 perceptron.update(labels[i],prediction,features)
                 # Affichage pour vérifier que le perceptron tourne bien
@@ -336,55 +337,44 @@ for train in train_datasets:
     #testing
     global_error = 0.0
     global_OOV_error = 0.0
-    global_ambiguous_error = 0.0 
-    #result = test_datasets.copy()
-    result = []
+    global_ambiguous_error = 0.0
     ambiguous = ambiguous_words(train[1])
-    # result = test.copy()
-    # entry = sentence, labels
     for entry in test_datasets:
-        OOV = OOV_words(train[1], entry[1])
-        name_test = entry[0]
-        #test_set = entry[1]
-        result.append(entry[1])
-        for j, values in enumerate(entry[1]):
-            predict_labels = []
-            for i in range(len(values[0])):
-                prediction = perceptron.predict(features1(values[0],i))
-                #prediction = perceptron.predict(features3(values[0],i, l_feat_list[values[0][i]], r_feat_list[values[0][i]]))
-                predict_labels.append(prediction)
-                # error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
-            result[j].append(predict_labels)
-        # print(entry[1])
-    # computing error rates
         error = 0
         OOV_error = 0
         ambiguous_error = 0
         count_error = 0
         count_OOV = 0
         count_ambiguous = 0
-
-        for s, labels, p_labels in entry[1]:
-            for i in range(len(labels)):
-                count_error += 1                
-                if labels[i] != p_labels[i]:
+        OOV = OOV_words(train[1], entry[1])
+        name_test = entry[0]
+        for words, labels in entry[1]:
+            for i in range(len(words)):
+                #prediction = perceptron.predict(features1(words,i))
+                #prediction = perceptron.predict(features2(words,i))
+                prediction = perceptron.predict(features3(words,i, l_feat_list[words[i]], r_feat_list[words[i]]))
+                
+                # computing error rates
+                count_error += 1
+                if labels[i] != prediction:
                     error += 1
-                if s[i] in OOV:
+                if words[i] in OOV:
                     count_OOV += 1
-                    if labels[i] != p_labels[i]:
+                    if labels[i] != prediction:
                         OOV_error += 1
-                if s[i] in ambiguous:
+                if words[i] in ambiguous:
                     count_ambiguous += 1
-                    if labels[i] != p_labels[i]:
+                    if labels[i] != prediction:
                         ambiguous_error += 1
-
+                             
         global_error += error * 100 / count_error
         global_OOV_error += OOV_error * 100 / count_OOV
         global_ambiguous_error += ambiguous_error * 100 / count_ambiguous
         f.write(name_train + ";" + name_test + ";" + str(error * 100 / count_error) + ";" + str(OOV_error * 100 / count_OOV) + ";" + str(ambiguous_error * 100 / count_ambiguous) + ";\n")
         print(name_test + " " + str(error * 100 / count_error)) 
 
-    print("Global error : " + str(global_error / len(result)))
+    print("Global error : " + str(global_error / len(test_datasets)))
+    f.write("global;;"+ str(global_error / len(test_datasets)) + ";" + str(global_OOV_error / len(test_datasets)) + ";" + str(global_ambiguous_error / len(test_datasets)))
     f.write("\n")
 f.close()
 
