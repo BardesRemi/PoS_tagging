@@ -220,7 +220,7 @@ def words_frequency_from_corpus (train, n):
     return [i[0] for i in sorted(word_frequency.items(), key=itemgetter(1), reverse=True)[:n]]
 
 def distrib_features_dict(train):
-    freq = words_frequency_from_corpus(train, 500)
+    freq = words_frequency_from_corpus(train, 100)
     d_left = defaultdict(lambda:defaultdict(int))
     d_right = defaultdict(lambda:defaultdict(int))
     for s, label in train :
@@ -244,13 +244,21 @@ def distrib_features_dict(train):
                 if s[i+1] in freq:
                     d_right[s[i]][s[i+1]] += 1
 
-    return (d_left,d_right)
-
+    #return (d_left,d_right)
+    d_left_list = defaultdict(lambda: list())
+    d_right_list = defaultdict(lambda: list())
+    for w, d in d_left.items():
+        tmp = sorted(d.items(), key=itemgetter(1), reverse=True)
+        d_left_list[w] = tmp
+    for w, d in d_right.items():
+        tmp = sorted(d.items(), key=itemgetter(1), reverse=True)
+        d_right_list[w] = tmp
+    return d_left_list, d_right_list
 
 #The features described in "FLORS : Fast and Simple Domain Adaptation for PoS Tagging"
 def features3(s,i, l_feat_list, r_feat_list):
     res = features2(s, i)
-    
+
     #Left features
     for k in range(len(l_feat_list)):
         res["l_" + str(k) + "_" + l_feat_list[k][0]] = 1
@@ -299,10 +307,7 @@ def make_dicts(datasets):
 #test = [("ud", json.load(open("fr.ud.test.json"))), ("foot", json.load(open("foot.json"))), ("minecraft", json.load(open("minecraft.json")))]
 
 max_epoch = 10
-
-# for w, d in l_feat.items():
-#     for k, v in d.items():
-#        if w=="le": print(k + " " + w + " " + str(v))
+all_labels = list(all_labels(full_datasets))
 
 filename = "Results.csv"
 f = open(filename, 'w')
@@ -310,17 +315,15 @@ f = open(filename, 'w')
 for train in train_datasets:
     name_train = train[0]
     #Training
-    perceptron = Perceptron(list(all_labels(full_datasets)))
+    perceptron = Perceptron(all_labels)
     count = 0
-    l_feat, r_feat = distrib_features_dict(train[1])
-    l_feat_list = sorted(l_feat[s[i]].items(), key=itemgetter(1), reverse=True)
-    r_feat_list = sorted(r_feat[s[i]].items(), key=itemgetter(1), reverse=True)
+    l_feat_list, r_feat_list = distrib_features_dict(train[1])
     for epoch in range(max_epoch):
         for words, labels in train[1]:
             for i in range(len(words)):
                 features = features1(words, i)
                 #features = features2(words,i)
-                #features = features3(words,i, l_feat_list, r_feat_list)
+                #features = features3(words,i, l_feat_list[words[i]], r_feat_list[words[i]])
                 #if words[i] == "le": print(features)
                 prediction = perceptron.predict(features)
                 perceptron.update(labels[i],prediction,features)
@@ -334,22 +337,24 @@ for train in train_datasets:
     global_error = 0.0
     global_OOV_error = 0.0
     global_ambiguous_error = 0.0 
-    result = test_datasets.copy()
+    #result = test_datasets.copy()
+    result = []
     ambiguous = ambiguous_words(train[1])
     # result = test.copy()
     # entry = sentence, labels
-    for entry in result:
+    for entry in test_datasets:
         OOV = OOV_words(train[1], entry[1])
         name_test = entry[0]
         #test_set = entry[1]
-        for values in entry[1]:
+        result.append(entry[1])
+        for j, values in enumerate(entry[1]):
             predict_labels = []
             for i in range(len(values[0])):
                 prediction = perceptron.predict(features1(values[0],i))
-                #prediction = perceptron.predict(features3(values[0],i, l_feat_list, r_feat_list))
+                #prediction = perceptron.predict(features3(values[0],i, l_feat_list[values[0][i]], r_feat_list[values[0][i]]))
                 predict_labels.append(prediction)
                 # error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
-            values.append(predict_labels)
+            result[j].append(predict_labels)
         # print(entry[1])
     # computing error rates
         error = 0
@@ -367,21 +372,22 @@ for train in train_datasets:
                 if s[i] in OOV:
                     count_OOV += 1
                     if labels[i] != p_labels[i]:
-                        error_OOV += 1
+                        OOV_error += 1
                 if s[i] in ambiguous:
                     count_ambiguous += 1
                     if labels[i] != p_labels[i]:
-                        error_ambiguous += 1
+                        ambiguous_error += 1
 
         global_error += error * 100 / count_error
         global_OOV_error += OOV_error * 100 / count_OOV
         global_ambiguous_error += ambiguous_error * 100 / count_ambiguous
         f.write(name_train + ";" + name_test + ";" + str(error * 100 / count_error) + ";" + str(OOV_error * 100 / count_OOV) + ";" + str(ambiguous_error * 100 / count_ambiguous) + ";\n")
-        print(name + " " + str(error * 100 / count)) 
+        print(name_test + " " + str(error * 100 / count_error)) 
 
     print("Global error : " + str(global_error / len(result)))
     f.write("\n")
 f.close()
+
 
 """
 Idée pour  évaluer le perceptron :

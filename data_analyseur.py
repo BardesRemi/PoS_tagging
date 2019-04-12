@@ -141,8 +141,8 @@ def ambiguous_words(train):
                 if not labels in words_dict[word]:
                     words_dict[word].append(labels)
     
-    for w, labels in words_dict:
-        if len(labels > 1):
+    for w, labels in words_dict.items():
+        if len(labels) > 1:
             res.append(w)
     return res
 
