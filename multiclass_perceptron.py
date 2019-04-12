@@ -289,15 +289,15 @@ def features3(s,i, l_features, r_features):
     #shape features
     return res
 
-train = train_datasets[0][1][:1000]
-test = test_datasets[0][1][:1000]
+train = train_datasets[2][1]
+test = test_datasets[2][1]
 l_feat, r_feat = distrib_features_dict(train,test)
 
 
-for i in range(10):
-    for ci, count in features3(train[1][0], i, l_feat, r_feat).items():
-        print(ci + " = " + str(count))
-    print("-------------")
+# for i in range(10):
+    # for ci, count in features3(train[1][0], i, l_feat, r_feat).items():
+        # print(ci + " = " + str(count))
+    # print("-------------")
 
 """
 #Make a dictionnary that associate every word & character to a unique identifier
@@ -315,27 +315,48 @@ def make_dicts(datasets):
 """
 
 #Training
-"""count = 0
-for epoch in range(10):
-    for words, labels in train_set:
-        for i in range(len(words)):
-            features = feature_from_word(words,i)
-            prediction = perceptron.predict(features)
-            #print(prediction)
-            perceptron.update(labels[i],prediction,features)
-            count += 1
-            if count%1000==0:
-                print(count)"""
+def training(max_epoch, train_set, perceptron):
+    count = 0
+    for epoch in range(max_epoch):
+        for words, labels in train_set:
+            for i in range(len(words)):
+                features = features3(words,i, l_feat, r_feat)
+                prediction = perceptron.predict(features)
+                #print(prediction)
+                perceptron.update(labels[i],prediction,features)
+                # Affichage pour vérifier que le perceptron tourne bien
+                count += 1
+                if count%1000==0:
+                    print(count)
 
 #testing
-"""error = 0
-total_test = 0
-for entry in foot_set:
-    for i in range (len(entry[0])):
-        error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
-        total_test += 1
+def testing(test_set, perceptron):
+    total_test = 0
+    result = test_set
+    # entry = sentence, labels
+    for entry in result:
+        predict_labels = []
+        for i in range (len(entry[0])):
+            prediction = perceptron.predict(feature_from_word(entry[0],i))
+            predict_labels.append(prediction)
+            # error += (perceptron.predict(feature_from_word(entry[0],i)) != entry[1][i])
+            total_test += 1
+        entry.append(predict_labels)
+    return result
+        
+def error_rates(predicted):
+    error = 0
+    count = 0
+    for s, labels, p_labels in predicted:
+        for i in range(len(labels)):
+            count += 1
+            error += labels[i] != p_labels[i]
+    print(error * 100 / count)
 
-print(error*100/total_test)"""
+perceptron = Perceptron(list(all_labels(full_datasets)))
+training(10, train, perceptron)
+predicted = testing(test, perceptron)
+error_rates(predicted)
 
 """
 Idée pour  évaluer le perceptron :

@@ -65,7 +65,8 @@ test_datasets = [("test_foot", fr_foot_test),
                  ("test_spoken", fr_spoken_test)]
 
 datasets = [ftb, gsd, partut, pud, sequoia, spoken]
-full_datasets = [foot, ftb, gsd, natdis, partut, pud, sequoia, spoken]
+# full_datasets = [foot, ftb, gsd, natdis, partut, pud, sequoia, spoken]
+full_datasets = [fr_foot_test, fr_natdis_test, fr_ftb_train, fr_ftb_test, fr_gsd_train, fr_gsd_test, fr_partut_train, fr_partut_test, fr_pud_train, fr_pud_test, fr_sequoia_train, fr_sequoia_test, fr_spoken_train, fr_spoken_test]
 
 #make a dictionnary of all the words inside a dataset
 def make_dict(dataset):
