@@ -112,58 +112,11 @@ class Perceptron:
         self._accum = None
         self._last_update = None
 
-#Loading data
-
 #creating all labels for the loaded data
 def all_labels(datasets):
     # Il existe un module "chain" qui contient la méthode "from_iterable"
     # qui transforme une liste de liste de liste etc en une simple liste c'est plus opti
     return set([label for dataset in datasets for words, labels in dataset for label in labels ])
-
-#label_set = all_labels([train_set, test_set, dev, foot_set, minecraft_set])
-
-#Generate a feature sparse vector (as a dictionnary) from a sentence, and a word position. 
-def feature_from_word(s,i):
-
-    # print("---------------------------")
-    # print(i)
-    # print(s)
-    # print(len(s))
-    # print("---------------------------")
-    res = {}
-    res['last3c: {}'.format(s[i][-3:])] = 1
-    res['last: {}'.format(s[i][-1])] = 1
-    res['first: {}'.format(s[i][0])] = 1
-    res['Word: {}'.format(s[i])] = 1
-    res['firstUpper: {}'.format(s[i][0].isupper())] = 1
-    res['allUpper: {}'.format(s[i].isupper())] = 1
-    if i>=2 and i< len(s)-2 :
-        res['wi-1: {}'.format(s[i-1])] = 1
-        res['wi-2: {}'.format(s[i-2])] = 1
-        res['wi+1: {}'.format(s[i+1])] = 1
-        res['wi+2: {}'.format(s[i+2])] = 1
-    else :
-        if i<1 :
-            res['wi-1: '] = 1
-            res['wi-2: '] = 1
-        elif i<2 :
-            res['wi-1: {}'.format(s[i-1])] = 1
-            res['wi-2: '] = 1
-        else :
-            res['wi-1: {}'.format(s[i-1])] = 1
-            res['wi-2: {}'.format(s[i-2])] = 1
-        if i>=len(s)-1 :
-            res['wi+1: '] = 1
-            res['wi+2: '] = 1
-        elif i>=len(s)-2 :
-            res['wi+1: {}'.format(s[i+1])] = 1
-            res['wi+2: '] = 1
-        else :
-            res['wi+1: {}'.format(s[i+1])] = 1
-            res['wi+2: {}'.format(s[i+2])] = 1
-    return res
-
-#perceptron = Perceptron(list(label_set))
 
 
 #Generate a feature sparse vector (as a dictionnary) from a sentence, and a word position. 
@@ -212,6 +165,7 @@ def features2(s,i):
 """-------------------------------------------------------------------------------"""
 """-------------------------------------------------------------------------------"""
 
+# function that returns the n most frequent words in a train set
 def words_frequency_from_corpus (train, n):
     word_frequency = defaultdict(int)
     for s, label in train:
@@ -219,32 +173,31 @@ def words_frequency_from_corpus (train, n):
             word_frequency.update({word : word_frequency[word]+1 })
     return [i[0] for i in sorted(word_frequency.items(), key=itemgetter(1), reverse=True)[:n]]
 
+"""
+Returns a dictionnary associating, for each word w in a train set, a list of (words ci, freq f) sorted on f
+the couple ci, f is added in the list only if the word ci is in the n most frequent words calculated with the previous function
+Returns also the dictionnary for the word, ci combinations
+"""
 def distrib_features_dict(train):
+    # First we create the dictionnary ci, freq if ci belongs to the n most frequent words
     freq = words_frequency_from_corpus(train, 100)
     d_left = defaultdict(lambda:defaultdict(int))
     d_right = defaultdict(lambda:defaultdict(int))
     for s, label in train :
         for i in range(len(s)):
-            #word = s[i]
-            #right_word = s[i+1]
-            #left_word = s[i-1]
             if i == 0 and i < len(s)-1:
                 if s[i+1] in freq:
                     d_right[s[i]][s[i+1]] += 1
             elif i == len(s)-1 :
                 if s[i-1] in freq:
                     d_left[s[i]][s[i-1]] += 1
-                #else :
-                    #d_left[s[i]]["a trash"] += 1
             else:
                 if s[i-1] in freq:
                     d_left[s[i]][s[i-1]] += 1
-                #else :
-                   #d_left[s[i]]["a trash"] += 1
                 if s[i+1] in freq:
                     d_right[s[i]][s[i+1]] += 1
 
-    #return (d_left,d_right)
+    # Then for each word we sort the lists associated and returns them
     d_left_list = defaultdict(lambda: list())
     d_right_list = defaultdict(lambda: list())
     for w, d in d_left.items():
@@ -278,45 +231,17 @@ def features3(s,i, l_feat_list, r_feat_list):
     for c in range(len(s[i])):
         res['last'+ str(c+1) +'c: {}'.format(s[i][-(c+1):])] = 1
 
-    #shape features
     return res
-
-
-# for i in range(10):
-    # for ci, count in features3(train[1][0], i, l_feat, r_feat).items():
-        # print(ci + " = " + str(count))
-    # print("-------------")
-
-"""
-#Make a dictionnary that associate every word & character to a unique identifier
-def make_dicts(datasets):
-    words_dict, chars_dict = {},{}
-    for dataset in dataset :
-        for words, labels in dataset :
-            for w in words :
-                if not w in words_dict :
-                    words_dict[w] = len(words_dict)
-                for c in w :
-                    if not c in chars_dict :
-                        chars_dict[c] = len(chars_dict)
-    return words_dict, chars_dict
-"""
-
-#perceptron = Perceptron(list(all_labels(full_datasets)))
-#train = train_datasets[2][1]
-#test = [("ud", json.load(open("fr.ud.test.json"))), ("foot", json.load(open("foot.json"))), ("minecraft", json.load(open("minecraft.json")))]
 
 max_epoch = 10
 all_labels = list(all_labels(full_datasets))
-
-#train = json.load(open("corpus/fr/fr.ftb.train.json"))
 
 filename = "Results_features3.csv"
 f = open(filename, 'w')
 
 for train in train_datasets:
-    name_train = train[0]
     #Training
+    name_train = train[0]
     perceptron = Perceptron(all_labels)
     count = 0
     l_feat_list, r_feat_list = distrib_features_dict(train[1])
@@ -329,12 +254,11 @@ for train in train_datasets:
                 prediction = perceptron.predict(features)
                 perceptron.update(labels[i],prediction,features)
                 # Affichage pour vérifier que le perceptron tourne bien
-                count += 1
-                if count%10000==0:
-                    print(count)
+                #count += 1
+                #if count%10000==0:
+                #    print(count)
 
-
-    #testing
+    #Testing
     global_error = 0.0
     global_OOV_error = 0.0
     global_ambiguous_error = 0.0
@@ -371,19 +295,10 @@ for train in train_datasets:
         global_OOV_error += OOV_error * 100 / count_OOV
         global_ambiguous_error += ambiguous_error * 100 / count_ambiguous
         f.write(name_train + ";" + name_test + ";" + str(error * 100 / count_error) + ";" + str(OOV_error * 100 / count_OOV) + ";" + str(ambiguous_error * 100 / count_ambiguous) + ";\n")
-        print(name_test + " " + str(error * 100 / count_error)) 
+        # Affichage intermédiaire pour vérifier que les résultats ne sont pas aberrants avant d'avoir tout calculé
+        #print(name_test + " " + str(error * 100 / count_error)) 
 
     print("Global error : " + str(global_error / len(test_datasets)))
     f.write("global;;"+ str(global_error / len(test_datasets)) + ";" + str(global_OOV_error / len(test_datasets)) + ";" + str(global_ambiguous_error / len(test_datasets)))
     f.write("\n")
 f.close()
-
-
-"""
-Idée pour  évaluer le perceptron :
-Train normal puis executer sur tous le test set
-Renvoyer le texte de test avec les labels originaux + les labels prédit
-Cela permet d'évaluer directement sa précision global
-On peut ensuite garder uniquement les mots OOV ou ambigus pour tester sa précision
-sur ces mots spécifiquement
-"""

@@ -42,13 +42,7 @@ pud = [fr_pud_train, fr_pud_test]
 sequoia = [fr_sequoia_train, fr_sequoia_test]
 spoken =  [fr_spoken_train, fr_spoken_test]
 
-"""ftb = [fr_ftb_dev, fr_ftb_test, fr_ftb_train]
-gsd = [fr_gsd_dev, fr_gsd_test, fr_gsd_train]
-partut = [fr_partut_dev, fr_partut_test, fr_partut_train]
-pud = [fr_pud_dev,fr_pud_test, fr_pud_train]
-sequoia = [fr_sequoia_dev, fr_sequoia_test, fr_sequoia_train]
-spoken =  [fr_spoken_dev, fr_spoken_test, fr_spoken_train]"""
-
+#Creating lists with name and datasets, used later when writing the results in a csv file
 train_datasets = [("train_ftb", fr_ftb_train),
                   ("train_gsd", fr_gsd_train),
                   ("train_partut", fr_partut_train),
@@ -64,8 +58,7 @@ test_datasets = [("test_foot", fr_foot_test),
                  ("test_sequoia", fr_sequoia_test),
                  ("test_spoken", fr_spoken_test)]
 
-datasets = [ftb, gsd, partut, pud, sequoia, spoken]
-# full_datasets = [foot, ftb, gsd, natdis, partut, pud, sequoia, spoken]
+#List used by the function creating the list of all labels
 full_datasets = [fr_foot_test, fr_natdis_test, fr_ftb_train, fr_ftb_test, fr_gsd_train, fr_gsd_test, fr_partut_train, fr_partut_test, fr_pud_train, fr_pud_test, fr_sequoia_train, fr_sequoia_test, fr_spoken_train, fr_spoken_test]
 
 #make a dictionnary of all the words inside a dataset
@@ -91,6 +84,7 @@ def make_dicts(datasets):
                     cpt += 1
     return words_dict
 
+#make a txt file with a sentence per line, used for computing the perplexity
 def make_txt(dataset):
     title = dataset[0] + ".txt"
     filename = "text/" + title
@@ -101,16 +95,16 @@ def make_txt(dataset):
     f.close()
 
 
-#display number of sentences and words of each dataset group
-"""for d in full_datawords
-    size = 0
-    for data in d:
-        size += len(dwords
-    words, chars = mawords
-    print(len(data))
-    print(len(words))words
-    print("------------")"""
 
+#display number of sentences and words of each dataset group, used for data analysis
+"""for d in test_datasets:
+    words = make_dict(d[1])
+    sentences = 0
+    name = d[0]
+    for data, labels in d[1]:
+        sentences += 1
+    print(name + " " + str(sentences) + " " + str(len(words)))"""
+    
 # Compute the OOV rate in a corpus
 def OOV_calculation (train, test):
     train_words = make_dict(train)
@@ -121,6 +115,7 @@ def OOV_calculation (train, test):
             cpt += 1
     return cpt/len(test_words) * 100
 
+#Returns the list of OOV words in a test set
 def OOV_words (train, test):
     train_words = make_dict(train)
     test_words = make_dict(test)
@@ -130,6 +125,7 @@ def OOV_words (train, test):
             res.append(w)
     return res
 
+# Returns the list of ambiguous words in a train set
 def ambiguous_words(train):
     words_dict= {}
     res = []
@@ -145,12 +141,6 @@ def ambiguous_words(train):
         if len(labels) > 1:
             res.append(w)
     return res
-
-
-# Display the OOV rate
-# for d in datasets:
-#     print(OOV_calculation(d[0],d[1]))
-#     print("------------")
 
 # Function that generates all the ngram from a sentence in a list form
 def ngram(sentence, n):
@@ -169,16 +159,6 @@ def generate_alphabet(corpus):
     for dataset in corpus:
         corp += "".join(generate_corp(dataset[1]))
     return set(corp)
-
-def generate_alphabet_V2(corpus):
-    corp = ""
-    for dataset in corpus:
-        corp = generate_corp(dataset)
-    return set(corp)
-
-#print(len(generate_alphabet(sequoia)))
-#print(generate_alphabet(sequoia))
-# print(generate_corp(ftb[1]))
 
 """ 
  Function that generates a dict associating all n-grams existing in a corpus to their # of appearances
@@ -234,6 +214,7 @@ def KL(corpus, alphabet, all_ngrams):
         somme +=  prob_test * math.log(prob_test/prob_train)
     return somme
 
+# Function that compute OOV words percentage and KL-divergence for each combination of train/test and writes it in a csv file
 def KL_display(trains, tests):
     alphabet = generate_alphabet(tests)
     all_ngrams = list("".join(k) for k in product(alphabet, repeat=3))
@@ -249,26 +230,3 @@ def KL_display(trains, tests):
 
 
 #KL_display(train_datasets, test_datasets)
-corpus = [fr_pud_train, fr_partut_train]
-alphabet = generate_alphabet_V2(corpus)
-all_ngrams = list("".join(k) for k in product(alphabet, repeat=3))
-#print(KL(corpus, alphabet, all_ngrams))
-
-# for dataset in train_datasets :
-#     make_txt(dataset)
-# for dataset in test_datasets :
-#     make_txt(dataset)
-
-#KL_display([("ftb_test" ,fr_ftb_test)], [("ftb_test", fr_ftb_test)])
-
-#print(train_datasets)
-
-"""
-Perplexity : 
-sur KenLM : https://kheafield.com/code/kenlm/
-Suivre les instructions pour compiler le programme
-Suivre la commande pour transformer un fichier texte en .arpa utilisé par le modèle
-( Il faut transformer le JSON en .txt, on ne garde que les phrases pas les labels, 
-une phrase par ligne)
-Puis on peut calculer la perplexité (avec query ?) faut chercher un peu apparemment
-"""
